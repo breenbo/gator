@@ -2,15 +2,28 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-	internal "github.com/breenbo/gator/internal/config"
+	cli "github.com/breenbo/gator/internal/cli"
+	config "github.com/breenbo/gator/internal/config"
+	"github.com/breenbo/gator/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	config := internal.Read()
-	config.SetUser("test")
+	config := config.Read()
+	dbQueries := database.InitDatabase(config.Db_url)
+	state := cli.State{
+		Db:  dbQueries,
+		Cfg: &config,
+	}
 
-	newConfig := internal.Read()
+	c := cli.RegisterFn()
+	cmd := cli.GetUserEntries()
 
-	fmt.Printf("%v\n", newConfig)
+	if err := c.Run(&state, cmd); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
