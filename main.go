@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 
 	cli "github.com/breenbo/gator/internal/cli"
 	config "github.com/breenbo/gator/internal/config"
@@ -23,7 +22,6 @@ func main() {
 	cmd := cli.GetUserEntries()
 
 	if err := c.Run(&state, cmd); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
