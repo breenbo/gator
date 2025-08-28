@@ -48,7 +48,8 @@ func RegisterFn() Commands {
 	c.Register("register", HandlerRegister)
 	c.Register("reset", HandleReset)
 	c.Register("users", HandleList)
-	c.Register("agg", HandleAgg)
+	c.Register("agg", HandleAggregator)
+	c.Register("addfeed", HandleAddFeed)
 
 	return c
 }
