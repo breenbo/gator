@@ -56,7 +56,96 @@ func HandleAddFeed(s *State, cmd Command) error {
 		return err
 	}
 
+	_, feedErr := createFollowFeed(ctx, s, url)
+	if feedErr != nil {
+		return feedErr
+	}
+
 	fmt.Printf("%v\n", feed)
 
 	return nil
+}
+
+func HandleListFeed(s *State, cmd Command) error {
+	ctx := context.Background()
+
+	feeds, err := s.Db.ListFeed(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		fmt.Printf("%s - %s from %s\n", feed.Name, feed.Url, feed.Username)
+	}
+
+	return nil
+}
+
+func HandleFollowFeed(s *State, cmd Command) error {
+	ctx := context.Background()
+
+	if len(cmd.Arguments) == 0 {
+		log.Fatal("need url")
+	}
+	url := cmd.Arguments[0]
+
+	value, err := createFollowFeed(ctx, s, url)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(value)
+
+	return nil
+}
+
+func HandleFollowingFeed(s *State, cmd Command) error {
+	ctx := context.Background()
+
+	name := s.Cfg.Current_user_name
+	user, err := s.Db.GetUser(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	userID := user.ID
+	followings, err := s.Db.GetFeedFollowsForUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	for _, following := range followings {
+		fmt.Printf("%s", following.FeedName)
+	}
+
+	return nil
+}
+
+// helpers
+func createFollowFeed(ctx context.Context, s *State, url string) (database.CreateFeedFollowRow, error) {
+	now := time.Now()
+	val := database.CreateFeedFollowRow{}
+
+	feedID, err := s.Db.GetFeedIDFromURL(ctx, url)
+	if err != nil {
+		return val, err
+	}
+	userID, err := s.Db.GetUser(ctx, s.Cfg.Current_user_name)
+	if err != nil {
+		return val, err
+	}
+
+	newFollow := database.CreateFeedFollowParams{
+		ID:        uuid.New().String(),
+		CreatedAt: now,
+		UpdatedAt: now,
+		FeedID:    feedID,
+		UserID:    userID.ID,
+	}
+	value, err := s.Db.CreateFeedFollow(ctx, newFollow)
+	if err != nil {
+		return val, err
+	}
+
+	return value, nil
 }
