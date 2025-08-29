@@ -49,10 +49,11 @@ func RegisterFn() Commands {
 	c.Register("reset", HandleReset)
 	c.Register("users", HandleList)
 	c.Register("agg", HandleAggregator)
-	c.Register("addfeed", HandleAddFeed)
+	c.Register("addfeed", MiddlewareLoggedIn(HandleAddFeed))
 	c.Register("feeds", HandleListFeed)
 	c.Register("follow", HandleFollowFeed)
-	c.Register("following", HandleFollowingFeed)
+	c.Register("following", MiddlewareLoggedIn(HandleFollowingFeed))
+	c.Register("unfollow", MiddlewareLoggedIn(HandleUnfollow))
 
 	return c
 }

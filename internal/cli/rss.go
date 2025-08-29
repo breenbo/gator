@@ -25,7 +25,7 @@ func HandleAggregator(s *State, cmd Command) error {
 	return nil
 }
 
-func HandleAddFeed(s *State, cmd Command) error {
+func HandleAddFeed(s *State, cmd Command, user database.User) error {
 	if len(cmd.Arguments) < 2 {
 		log.Fatal("need feed name and url")
 	}
@@ -33,11 +33,6 @@ func HandleAddFeed(s *State, cmd Command) error {
 	fmt.Print("get the feed\n")
 
 	ctx := context.Background()
-	userName := s.Cfg.Current_user_name
-	user, err := s.Db.GetUser(ctx, userName)
-	if err != nil {
-		return err
-	}
 
 	name := cmd.Arguments[0]
 	url := cmd.Arguments[1]
@@ -99,14 +94,8 @@ func HandleFollowFeed(s *State, cmd Command) error {
 	return nil
 }
 
-func HandleFollowingFeed(s *State, cmd Command) error {
+func HandleFollowingFeed(s *State, cmd Command, user database.User) error {
 	ctx := context.Background()
-
-	name := s.Cfg.Current_user_name
-	user, err := s.Db.GetUser(ctx, name)
-	if err != nil {
-		return err
-	}
 
 	userID := user.ID
 	followings, err := s.Db.GetFeedFollowsForUser(ctx, userID)
@@ -148,4 +137,22 @@ func createFollowFeed(ctx context.Context, s *State, url string) (database.Creat
 	}
 
 	return value, nil
+}
+
+func HandleUnfollow(s *State, cmd Command, user database.User) error {
+	ctx := context.Background()
+	if len(cmd.Arguments) == 0 {
+		log.Fatal("url needed")
+	}
+
+	del := database.DeleteFollowParams{
+		Url:    cmd.Arguments[0],
+		UserID: user.ID,
+	}
+
+	if err := s.Db.DeleteFollow(ctx, del); err != nil {
+		return err
+	}
+
+	return nil
 }
