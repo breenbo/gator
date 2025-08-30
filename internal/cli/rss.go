@@ -12,15 +12,23 @@ import (
 )
 
 func HandleAggregator(s *State, cmd Command) error {
-	ctx := context.Background()
-	url := "https://www.wagslane.dev/index.xml"
-
-	xml, err := xml.FetchFeed(ctx, url)
-	if err != nil {
-		log.Fatal(err)
+	if len(cmd.Arguments) == 0 {
+		log.Fatal("time duration needed")
 	}
 
-	fmt.Println(xml)
+	timeDuration := cmd.Arguments[0]
+	duration, err := time.ParseDuration(timeDuration)
+	if err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(duration)
+	for ; ; <-ticker.C {
+		fmt.Print("\n\nget feed\n")
+		if err := scrapeFeeds(s); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -152,6 +160,35 @@ func HandleUnfollow(s *State, cmd Command, user database.User) error {
 
 	if err := s.Db.DeleteFollow(ctx, del); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func scrapeFeeds(s *State) error {
+	ctx := context.Background()
+	// get the next feed to fetch
+	next_feed, err := s.Db.GetNextFeedToFetch(ctx)
+	if err != nil {
+		return err
+	}
+
+	// mark the next feed as fetched
+	value := database.MarkFeedFetchedParams{
+		UpdatedAt: time.Now(),
+		ID:        next_feed.ID,
+	}
+	if err := s.Db.MarkFeedFetched(ctx, value); err != nil {
+		return err
+	}
+
+	news, err := xml.FetchFeed(ctx, next_feed.Url)
+	if err != nil {
+		return err
+	}
+
+	for _, new := range news.Channel.Item {
+		fmt.Printf("%s", new.Title)
 	}
 
 	return nil
