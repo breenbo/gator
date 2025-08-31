@@ -1,4 +1,4 @@
-# Blog aggregator from boot.dev project:
+# gator - Blog aggregator from boot.dev project:
 
 GOAL: interact with a postgres db from go.
 
