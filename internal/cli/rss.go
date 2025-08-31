@@ -29,8 +29,6 @@ func HandleAggregator(s *State, cmd Command) error {
 			return err
 		}
 	}
-
-	return nil
 }
 
 func HandleAddFeed(s *State, cmd Command, user database.User) error {
